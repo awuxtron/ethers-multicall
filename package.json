@@ -1,0 +1,75 @@
+{
+    "name": "@awuxtron/ethers-multicall",
+    "version": "1.0.0",
+    "description": "Add an ability to call multiple EVM Compatible network requests in a single request.",
+    "homepage": "https://github.com/awuxtron/ethers-multicall#readme",
+    "bugs": {
+        "url": "https://github.com/awuxtron/ethers-multicall/issues",
+        "email": "awuxtron@gmail.com"
+    },
+    "license": "MIT",
+    "author": "Diep Dang <awuxtron@gmail.com> (https://awuxtron.dev)",
+    "funding": {
+        "type": "paypal",
+        "url": "https://paypal.me/awuxtron"
+    },
+    "repository": "github:awuxtron/ethers-multicall",
+    "publishConfig": {
+        "access": "public"
+    },
+    "type": "module",
+    "sideEffects": false,
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "exports": {
+        ".": {
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.cjs",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "scripts": {
+        "build": "tsc && unbuild",
+        "eslint": "eslint --ignore-path .gitignore --fix",
+        "postinstall": "npx simple-git-hooks",
+        "prettier": "prettier --ignore-path .gitignore --ignore-unknown --write",
+        "up": "taze -r major -I"
+    },
+    "peerDependencies": {
+        "ethers": "^5.0"
+    },
+    "devDependencies": {
+        "@awuxtron/eslint-config": "^1.0.2",
+        "@awuxtron/prettier-config": "^1.0.0",
+        "@commitlint/cli": "^17.3.0",
+        "@commitlint/config-conventional": "^17.3.0",
+        "@types/node": "^18.11.18",
+        "eslint": "^8.30.0",
+        "ethers": "^5.7.2",
+        "lint-staged": "^13.1.0",
+        "prettier": "^2.8.1",
+        "simple-git-hooks": "^2.8.1",
+        "taze": "^0.8.5",
+        "typescript": "^4.9.4",
+        "unbuild": "^1.0.2"
+    },
+    "commitlint": {
+        "extends": "@commitlint/config-conventional"
+    },
+    "eslintConfig": {
+        "extends": "@awuxtron"
+    },
+    "lint-staged": {
+        "*": "npm run prettier",
+        "*.{js,ts}": "npm run eslint"
+    },
+    "prettier": "@awuxtron/prettier-config",
+    "simple-git-hooks": {
+        "commit-msg": "npx --no -- commitlint --edit ${1}",
+        "pre-commit": "npx lint-staged"
+    }
+}
