@@ -21,9 +21,11 @@ export type ContractClass<C extends ethers.Contract, F extends boolean> = Contra
 
 class Contract<C extends ethers.Contract> {
     protected readonly contract: C
+    protected readonly allowFailure: boolean
 
-    constructor(contract: C) {
+    constructor(contract: C, allowFailure: boolean) {
         this.contract = contract
+        this.allowFailure = allowFailure
 
         const viewFragments = contract.interface.fragments.filter((fragment): fragment is utils.FunctionFragment => {
             return (
@@ -47,7 +49,7 @@ class Contract<C extends ethers.Contract> {
     ): MulticallContext {
         const context: MulticallContext = {
             address: this.contract.address,
-            allowFailure: false,
+            allowFailure: this.allowFailure,
             decoder: () => {
                 //
             },
@@ -99,6 +101,6 @@ class Contract<C extends ethers.Contract> {
     }
 }
 
-export function getContract<C extends ethers.Contract, F extends boolean>(contract: C) {
-    return new Contract(contract) as ContractClass<C, F>
+export function getContract<C extends ethers.Contract, F extends boolean>(contract: C, allowFailure: F) {
+    return new Contract(contract, allowFailure) as ContractClass<C, F>
 }

@@ -2,7 +2,7 @@ import type { BytesLike } from 'ethers'
 
 export interface MulticallContext<T = any, F extends boolean | undefined = true | false | undefined> {
     address: string
-    allowFailure?: boolean
+    allowFailure: boolean
     decoder: (data: BytesLike) => F extends true ? T | undefined : T
     encoded: BytesLike
     methodName: string

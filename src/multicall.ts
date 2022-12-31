@@ -22,7 +22,7 @@ export interface MulticallData {
 
 export class Multicall<O extends MulticallOptions> {
     public provider: ethers.providers.Provider
-    public allowFailure: boolean
+    public allowFailure: O['allowFailure'] extends boolean ? O['allowFailure'] : false
     public chainId?: number
     public multicallAddress?: string
     public version: MulticallVersion
@@ -32,14 +32,14 @@ export class Multicall<O extends MulticallOptions> {
 
         const { allowFailure = false, chainId, multicallAddress, version = 3 } = options || {}
 
-        this.allowFailure = allowFailure
+        this.allowFailure = allowFailure as never
         this.chainId = chainId
         this.multicallAddress = multicallAddress
         this.version = version
     }
 
     public for<C extends ethers.Contract>(contract: C) {
-        return getContract<C, O['allowFailure'] extends boolean ? O['allowFailure'] : false>(contract)
+        return getContract(contract, this.allowFailure)
     }
 
     public async call<T extends MulticallContext[]>(contexts: [...T], overrides: CallOverrides = {}) {
@@ -84,7 +84,7 @@ export class Multicall<O extends MulticallOptions> {
             }
 
             if (this.version === 3) {
-                result.allowFailure = context.allowFailure || this.allowFailure
+                result.allowFailure = context.allowFailure
             }
 
             return result
