@@ -2,7 +2,7 @@ import type { ExtractReturnType, MulticallContext } from './types'
 import { BigNumberish, BytesLike, CallOverrides, ethers } from 'ethers'
 import ABI from './abis/multicall3.json'
 import { getContract } from './contract'
-import { InvalidMulticallVersion } from './errors'
+import { InvalidMulticallVersion, InvalidReturnedData } from './errors'
 import { getMulticallAddress } from './utils'
 
 export type MulticallVersion = 1 | 2 | 3
@@ -54,21 +54,34 @@ export class Multicall<O extends MulticallOptions> {
             overrides
         )
 
-        return results.map((result, index) => contexts[index].decoder(result)) as ExtractReturnType<T>
+        return results.map(([success, result], index) => {
+            if (!contexts[index].allowFailure && !success) {
+                throw new InvalidReturnedData(contexts[index], result)
+            }
+
+            return contexts[index].decoder(result)
+        }) as ExtractReturnType<T>
     }
 
-    protected async execute(ct: ethers.Contract, data: MulticallData[], or: CallOverrides): Promise<BytesLike[]> {
+    protected async execute(
+        ct: ethers.Contract,
+        data: MulticallData[],
+        or: CallOverrides
+    ): Promise<Array<[boolean, BytesLike]>> {
         switch (this.version) {
             case 1: {
-                return (await ct.callStatic.aggregate(data, or)).returnData
+                return (await ct.callStatic.aggregate(data, or)).returnData.map((r: BytesLike) => [true, r])
             }
 
             case 2: {
-                return (await ct.callStatic.tryAggregate(!this.allowFailure, data, or)).map((r: any) => r.returnData)
+                return (await ct.callStatic.tryAggregate(!this.allowFailure, data, or)).map((r: any) => [
+                    r.success,
+                    r.returnData,
+                ])
             }
 
             case 3: {
-                return (await ct.callStatic.aggregate3Value(data, or)).map((r: any) => r.returnData)
+                return (await ct.callStatic.aggregate3Value(data, or)).map((r: any) => [r.success, r.returnData])
             }
 
             default: {

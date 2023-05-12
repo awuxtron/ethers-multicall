@@ -1,6 +1,5 @@
 import type { ExcludeLast, MulticallContext } from './types'
 import type { ethers, utils } from 'ethers'
-import { InvalidReturnedData } from './errors'
 import { isObject } from './utils'
 
 export type MethodContext<
@@ -70,10 +69,6 @@ class Contract<C extends ethers.Contract> {
 
         context.decoder = (data) => {
             if (data == '0x') {
-                if (!context.allowFailure) {
-                    throw new InvalidReturnedData(context, data)
-                }
-
                 return
             }
 
