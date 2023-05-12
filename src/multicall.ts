@@ -43,13 +43,19 @@ export class Multicall<O extends MulticallOptions> {
         return getContract(contract, this.allowFailure)
     }
 
-    public async call<T extends MulticallContext[]>(contexts: [...T], overrides: CallOverrides = {}) {
+    public async getAddress() {
         if (!this.multicallAddress) {
             this.multicallAddress = getMulticallAddress(this.chainId || (await this.provider.getNetwork()).chainId)
         }
 
+        return this.multicallAddress
+    }
+
+    public async call<T extends MulticallContext[]>(contexts: [...T], overrides: CallOverrides = {}) {
+        const address = await this.getAddress()
+
         const results = await this.execute(
-            new ethers.Contract(this.multicallAddress, ABI, this.provider),
+            new ethers.Contract(address, ABI, this.provider),
             this.buildMulticallData(contexts),
             overrides
         )
