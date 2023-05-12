@@ -27,14 +27,11 @@ class Contract<C extends ethers.Contract> {
         this.contract = contract
         this.allowFailure = allowFailure
 
-        const viewFragments = contract.interface.fragments.filter((fragment): fragment is utils.FunctionFragment => {
-            return (
-                fragment.type == 'function' &&
-                ['pure', 'view'].includes((fragment as utils.FunctionFragment).stateMutability)
-            )
+        const fragments = contract.interface.fragments.filter((fragment): fragment is utils.FunctionFragment => {
+            return fragment.type == 'function'
         })
 
-        for (const fragment of viewFragments) {
+        for (const fragment of fragments) {
             Object.defineProperty(this, fragment.name, {
                 enumerable: true,
                 writable: false,

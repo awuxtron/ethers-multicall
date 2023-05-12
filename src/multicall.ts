@@ -1,5 +1,5 @@
 import type { ExtractReturnType, MulticallContext } from './types'
-import { BytesLike, CallOverrides, ethers } from 'ethers'
+import { BigNumberish, BytesLike, CallOverrides, ethers } from 'ethers'
 import ABI from './abis/multicall3.json'
 import { getContract } from './contract'
 import { InvalidMulticallVersion } from './errors'
@@ -18,6 +18,7 @@ export interface MulticallData {
     target: string
     callData: BytesLike
     allowFailure?: boolean
+    value?: BigNumberish
 }
 
 export class Multicall<O extends MulticallOptions> {
@@ -67,7 +68,7 @@ export class Multicall<O extends MulticallOptions> {
             }
 
             case 3: {
-                return (await ct.callStatic.aggregate3(data, or)).map((r: any) => r.returnData)
+                return (await ct.callStatic.aggregate3Value(data, or)).map((r: any) => r.returnData)
             }
 
             default: {
@@ -85,6 +86,7 @@ export class Multicall<O extends MulticallOptions> {
 
             if (this.version === 3) {
                 result.allowFailure = context.allowFailure
+                result.value = context.value ?? 0
             }
 
             return result

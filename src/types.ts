@@ -1,4 +1,4 @@
-import type { BytesLike } from 'ethers'
+import type { BigNumberish, BytesLike } from 'ethers'
 
 export interface MulticallContext<T = any, F extends boolean | undefined = true | false | undefined> {
     address: string
@@ -7,6 +7,7 @@ export interface MulticallContext<T = any, F extends boolean | undefined = true 
     encoded: BytesLike
     methodName: string
     methodParameters: any[]
+    value?: BigNumberish
 }
 
 export type ExtractReturnType<T extends MulticallContext[]> = {
