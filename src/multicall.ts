@@ -1,5 +1,5 @@
 import type { ExtractReturnType, MulticallContext } from './types'
-import { BigNumberish, BytesLike, CallOverrides, ethers } from 'ethers'
+import { BigNumber, BigNumberish, BytesLike, CallOverrides, ethers } from 'ethers'
 import ABI from './abis/multicall3.json'
 import { getContract } from './contract'
 import { InvalidMulticallVersion, InvalidReturnedData } from './errors'
@@ -74,6 +74,10 @@ export class Multicall<O extends MulticallOptions> {
         data: MulticallData[],
         or: CallOverrides
     ): Promise<Array<[boolean, BytesLike]>> {
+        if (!or.value) {
+            or.value = Object.values(data).reduce((sum, i) => sum.add(i.value ?? 0), BigNumber.from(0))
+        }
+
         switch (this.version) {
             case 1: {
                 return (await ct.callStatic.aggregate(data, or)).returnData.map((r: BytesLike) => [true, r])
