@@ -14,4 +14,11 @@ export type ExtractReturnType<T extends MulticallContext[]> = {
     [K in keyof T]: ReturnType<T[K]['decoder']>
 }
 
+export type ExtractReturnTypeIncludeStatus<T extends MulticallContext[]> = {
+    [K in keyof T]: {
+        isSuccess: boolean
+        data: ReturnType<T[K]['decoder']>
+    }
+}
+
 export type ExcludeLast<T extends any[]> = Required<T> extends [...infer HEAD, any] ? HEAD : any[]

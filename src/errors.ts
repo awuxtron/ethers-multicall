@@ -2,7 +2,7 @@ import type { MulticallContext } from './types'
 
 export class UnsupportedChainId extends Error {
     constructor(chainId: any) {
-        super(`Chain ID ${chainId} is not supported, please specified the custom multicall address.`)
+        super(`Chain ID ${chainId} is not supported, please specify the custom multicall address.`)
     }
 }
 
@@ -12,10 +12,10 @@ export class InvalidMulticallVersion extends Error {
     }
 }
 
-export class InvalidReturnedData extends Error {
+export class MethodCallFailed extends Error {
     constructor(context: MulticallContext, returnedData: any) {
         const params = context.methodParameters.join(', ')
 
-        super(`The contract method ${context.methodName}(${params}) returned an invalid data: ${returnedData}.`)
+        super(`Call contract method: ${context.methodName}(${params}) failed, returned data: ${returnedData}.`)
     }
 }

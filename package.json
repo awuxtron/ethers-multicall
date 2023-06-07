@@ -1,6 +1,6 @@
 {
     "name": "@awuxtron/ethers-multicall",
-    "version": "1.1.3",
+    "version": "1.2.0",
     "description": "Add an ability to call multiple EVM Compatible network requests in a single request.",
     "homepage": "https://github.com/awuxtron/ethers-multicall#readme",
     "bugs": {

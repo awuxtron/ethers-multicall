@@ -1,8 +1,8 @@
-import type { ExtractReturnType, MulticallContext } from './types'
+import type { ExtractReturnType, ExtractReturnTypeIncludeStatus, MulticallContext } from './types'
 import { BigNumber, BigNumberish, BytesLike, CallOverrides, ethers } from 'ethers'
 import ABI from './abis/multicall3.json'
 import { getContract } from './contract'
-import { InvalidMulticallVersion, InvalidReturnedData } from './errors'
+import { InvalidMulticallVersion, MethodCallFailed } from './errors'
 import { getMulticallAddress } from './utils'
 
 export type MulticallVersion = 1 | 2 | 3
@@ -21,6 +21,8 @@ export interface MulticallData {
     value?: BigNumberish
 }
 
+type ExecuteResult = Array<[boolean, BytesLike]>
+
 export class Multicall<O extends MulticallOptions> {
     public provider: ethers.providers.Provider
     public allowFailure: O['allowFailure'] extends boolean ? O['allowFailure'] : false
@@ -31,12 +33,16 @@ export class Multicall<O extends MulticallOptions> {
     constructor(provider: ethers.providers.Provider, options?: O) {
         this.provider = provider
 
-        const { allowFailure = false, chainId, multicallAddress, version = 3 } = options || {}
+        const { allowFailure = false, chainId, multicallAddress, version = 3 } = options ?? {}
 
         this.allowFailure = allowFailure as never
         this.chainId = chainId
         this.multicallAddress = multicallAddress
         this.version = version
+    }
+
+    public get contract() {
+        return this.getAddress().then((address) => new ethers.Contract(address, ABI, this.provider))
     }
 
     public for<C extends ethers.Contract>(contract: C) {
@@ -45,35 +51,31 @@ export class Multicall<O extends MulticallOptions> {
 
     public async getAddress() {
         if (!this.multicallAddress) {
-            this.multicallAddress = getMulticallAddress(this.chainId || (await this.provider.getNetwork()).chainId)
+            this.multicallAddress = getMulticallAddress(this.chainId ?? (await this.provider.getNetwork()).chainId)
         }
 
         return this.multicallAddress
     }
 
     public async call<T extends MulticallContext[]>(contexts: [...T], overrides: CallOverrides = {}) {
-        const address = await this.getAddress()
-
-        const results = await this.execute(
-            new ethers.Contract(address, ABI, this.provider),
-            this.buildMulticallData(contexts),
-            overrides
-        )
-
-        return results.map(([success, result], index) => {
-            if (!contexts[index].allowFailure && !success) {
-                throw new InvalidReturnedData(contexts[index], result)
-            }
-
-            return contexts[index].decoder(result)
-        }) as ExtractReturnType<T>
+        return (await this.callIncludeStatus(contexts, overrides)).map(({ data }) => data) as ExtractReturnType<T>
     }
 
-    protected async execute(
-        ct: ethers.Contract,
-        data: MulticallData[],
-        or: CallOverrides
-    ): Promise<Array<[boolean, BytesLike]>> {
+    public async callIncludeStatus<T extends MulticallContext[]>(contexts: [...T], overrides: CallOverrides = {}) {
+        const response = await this.execute(await this.contract, this.buildMulticallData(contexts), overrides)
+
+        const result = response.map(([isSuccess, result], index) => {
+            if (!contexts[index].allowFailure && !isSuccess) {
+                throw new MethodCallFailed(contexts[index], result)
+            }
+
+            return { isSuccess, data: isSuccess ? contexts[index].decoder(result) : undefined }
+        })
+
+        return result as ExtractReturnTypeIncludeStatus<T>
+    }
+
+    protected async execute(ct: ethers.Contract, data: MulticallData[], or: CallOverrides): Promise<ExecuteResult> {
         if (!or.value) {
             or.value = Object.values(data).reduce((sum, i) => sum.add(i.value ?? 0), BigNumber.from(0))
         }
